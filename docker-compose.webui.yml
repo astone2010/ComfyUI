@@ -1,0 +1,35 @@
+
+
+services:
+  comfyui-webui:
+    build:
+      context: .
+      dockerfile: Dockerfile.webui
+    container_name: comfyui-webui
+    restart: unless-stopped
+    
+    ports:
+      - "8188:8188"
+    
+    volumes:
+      # Workflow files and templates
+      - ./input:/comfyui/input
+      - ./output:/comfyui/output
+      
+      # Optional: model metadata for validation (no actual models needed)
+      - ./models:/comfyui/models
+    
+    environment:
+      # Run in CPU mode - no GPU needed
+      - CUDA_VISIBLE_DEVICES=""
+    
+    # Minimal resource usage
+    mem_limit: 2g
+    cpus: "2"
+    
+    networks:
+      - comfyui-network
+
+networks:
+  comfyui-network:
+    driver: bridge

@@ -1,0 +1,51 @@
+# Lightweight ComfyUI Web UI (Workflow Builder Only)
+# CPU-only, minimal dependencies - no actual execution or model loading
+FROM python:3.13-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git curl ca-certificates && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade pip setuptools wheel
+
+WORKDIR /comfyui
+
+# Install only the frontend and minimal deps (skip torch/kornia/spandrel which pull in torch)
+RUN pip install \
+    aiohttp>=3.11.8 \
+    yarl>=1.18.0 \
+    pyyaml \
+    Pillow \
+    pydantic~=2.0 \
+    pydantic-settings~=2.0 \
+    SQLAlchemy \
+    alembic \
+    numpy \
+    psutil \
+    tqdm \
+    requests \
+    einops \
+    transformers>=4.50.3 \
+    tokenizers>=0.13.3 \
+    sentencepiece \
+    safetensors>=0.4.2 \
+    scipy \
+    av>=14.2.0 \
+    comfy-kitchen>=0.2.7 \
+    comfyui-frontend-package==1.36.14 \
+    comfyui-workflow-templates==0.8.11 \
+    comfyui-embedded-docs==0.4.0
+
+COPY . .
+
+RUN mkdir -p models/checkpoints input output
+
+EXPOSE 8188
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8188/ || exit 1
+
+CMD ["python", "main.py", "--listen", "0.0.0.0", "--cpu"]

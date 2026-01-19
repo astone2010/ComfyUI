@@ -1,18 +1,30 @@
 # ComfyUI Docker Guide
 
-This guide explains how to run ComfyUI in Docker.
+This guide explains how to run ComfyUI in Docker with two variants:
+
+1. **Full Version** (with GPU) - For executing workflows
+2. **Web UI Only** (CPU) - For building/designing workflows
 
 ## Prerequisites
 
+### Full Version
 - Docker Engine 20.10+
 - Docker Compose 2.0+
 - NVIDIA Docker runtime (for GPU support)
 - 16GB+ RAM recommended
-- NVIDIA GPU with CUDA 12.6+ support (optional, can run on CPU)
+- NVIDIA GPU with CUDA 12.6+ support
+
+### Web UI Only
+- Docker Engine 20.10+
+- Docker Compose 2.0+
+- 2GB+ RAM (minimal)
+- No GPU required
 
 ## Quick Start
 
-### 1. Build the Docker Image
+### Option A: Full Version (GPU - Workflow Execution)
+
+#### 1. Build the Docker Image
 
 ```bash
 docker build -t comfyui:latest .
@@ -24,7 +36,7 @@ Or using Docker Compose:
 docker-compose build
 ```
 
-### 2. Run with Docker Compose
+#### 2. Run with Docker Compose
 
 ```bash
 docker-compose up -d
@@ -32,11 +44,51 @@ docker-compose up -d
 
 Access ComfyUI at `http://localhost:8188`
 
-### 3. Stop the Container
+#### 3. Stop the Container
 
 ```bash
 docker-compose down
 ```
+
+---
+
+### Option B: Web UI Only (CPU - Workflow Builder)
+
+Lightweight version for designing workflows on a PC without GPU. Workflows can later be executed on another machine with the full version.
+
+#### 1. Build the Image
+
+```bash
+docker build -f Dockerfile.webui -t comfyui-webui:latest .
+```
+
+Or using Docker Compose:
+
+```bash
+docker-compose -f docker-compose.webui.yml build
+```
+
+#### 2. Run the Web UI
+
+```bash
+docker-compose -f docker-compose.webui.yml up -d
+```
+
+Access the workflow designer at `http://localhost:8188`
+
+#### 3. Stop the Container
+
+```bash
+docker-compose -f docker-compose.webui.yml down
+```
+
+**Benefits:**
+- ~500MB image (vs 5GB+)
+- Minimal RAM usage (2GB vs 16GB+)
+- No GPU required
+- Fast startup
+- Perfect for workflow design and sharing
+- Export workflows as JSON to run on full version
 
 ## Configuration
 
@@ -132,9 +184,40 @@ mem_limit: 32g  # Increase for large models
 docker run -it -e COMFYUI_CPU_THREADS=8 comfyui:latest
 ```
 
+## Switching Between Versions
+
+### Run Full Version Then Switch to Web UI
+
+```bash
+# Stop full version
+docker-compose down
+
+# Start web UI only
+docker-compose -f docker-compose.webui.yml up -d
+```
+
+### Run Both Versions Simultaneously
+
+Use different ports:
+
+```bash
+# Full version on port 8188
+docker-compose up -d
+
+# Web UI on port 8189
+docker-compose -f docker-compose.webui.yml up -d -p 8189:8188
+```
+
 ## Troubleshooting
 
-### GPU Not Detected
+### Web UI Version Not Showing Nodes
+
+The web UI version won't execute workflows. To test execution:
+1. Export workflow as JSON from web UI
+2. Import on full version or use ComfyUI API
+3. No execution happens in web UI-only mode
+
+### GPU Not Detected (Full Version)
 
 ```bash
 docker run --gpus all -it comfyui:latest python -c "import torch; print(torch.cuda.is_available())"
@@ -142,7 +225,8 @@ docker run --gpus all -it comfyui:latest python -c "import torch; print(torch.cu
 
 ### Out of Memory
 
-Increase Docker memory limits or use `--cpu` mode.
+- Full version: Increase Docker memory limits or use `--cpu` mode
+- Web UI: Should use <500MB normally
 
 ### Port Already in Use
 
@@ -180,17 +264,43 @@ docker run -p 8188:8188 --name comfyui1 -d comfyui:latest
 docker run -p 8189:8188 --name comfyui2 -d comfyui:latest
 ```
 
+## Workflow Export/Import
+
+### Export from Web UI Version
+1. Design workflow in web UI
+2. Use `Ctrl+S` to save workflow as JSON
+3. Download the JSON file
+
+### Import on Full Version
+1. Place JSON in a shared volume
+2. Load in full ComfyUI instance
+3. Execute with your GPU
+
+### Using ComfyUI API
+Export the workflow and use the REST API:
+
+```bash
+curl -X POST http://localhost:8188/prompt \
+  -H "Content-Type: application/json" \
+  -d @workflow.json
+```
+
 ## Production Deployment
 
 For production use:
 
 1. Use specific version tags: `comfyui:v0.9.2`
-2. Add health checks (included in Dockerfile)
+2. Add health checks (included in both Dockerfiles)
 3. Use reverse proxy (nginx example in docker-compose.yml)
 4. Set resource limits appropriately
 5. Use named volumes for persistence
 6. Implement backup strategy for models directory
 7. Monitor container health with docker stats
+
+### Multi-Environment Setup
+- **Dev Machine**: Web UI version for workflow design
+- **Production Machine**: Full version for execution
+- **Shared Storage**: NFS or S3 for workflow files
 
 ## Additional Resources
 

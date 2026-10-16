@@ -1,0 +1,50 @@
+additional_models:
+    base_path: /models/additional
+    checkpoints: checkpoints
+    text_encoders: |
+        text_encoders
+        clip
+    clip: clip
+    clip_vision: clip_vision
+    configs: configs
+    controlnet: controlnet
+    diffusion_models: |
+        diffusion_models
+        unet
+    embeddings: embeddings
+    diffusers: diffusers
+    loras: loras
+    style_models: style_models
+    vae_approx: vae_approx
+    gligen: gligen
+    upscale_models: upscale_models
+    latent_upscale_models: latent_upscale_models
+    vae: vae
+    hypernetworks: hypernetworks
+    photomaker: photomaker
+    classifiers: classifiers
+    audio_encoders: audio_encoders
+    model_patches: model_patches
+    background_removal: background_removal
+    frame_interpolation: frame_interpolation
+    geometry_estimation: geometry_estimation
+    optical_flow: optical_flow
+    detection: detection
+    animatediff_models: animatediff_models
+    animatediff_motion_lora: animatediff_motion_lora
+    animatediff_video_formats: animatediff_video_formats
+    blip: blip
+    CogVideo: CogVideo
+    gguf: gguf
+    insightface: insightface
+    instantid: instantid
+    ipadapter: ipadapter
+    Joy_caption: Joy_caption
+    layerstyle: layerstyle
+    liveportrait: liveportrait
+    LLM: LLM
+    onnx: onnx
+    sams: sams
+    SEEDVR2: SEEDVR2
+    ultralytics: ultralytics
+    xlabs: xlabs

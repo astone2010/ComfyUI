@@ -1,65 +1,51 @@
-version: '3.8'
-
 services:
   comfyui:
+    image: comfyui:local
     build:
       context: .
       dockerfile: Dockerfile
     container_name: comfyui
     restart: unless-stopped
-    
-    # GPU support (NVIDIA)
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    
+    gpus: all
     ports:
-      - "8188:8188"
-    
+      - "${COMFYUI_PORT:-8188}:8188"
     volumes:
-      # Model directories
-      - ./models/checkpoints:/comfyui/models/checkpoints
-      - ./models/vae:/comfyui/models/vae
-      - ./models/loras:/comfyui/models/loras
-      - ./models/embeddings:/comfyui/models/embeddings
-      - ./models:/comfyui/models
-      
-      # Input/Output directories
-      - ./input:/comfyui/input
-      - ./output:/comfyui/output
-      
-      # Custom nodes
-      - ./custom_nodes:/comfyui/custom_nodes
-    
+      - type: bind
+        source: ./models
+        target: /comfyui/models
+      - type: bind
+        source: ${COMFYUI_ADDITIONAL_MODELS:-F:/Comfyui/models}
+        target: /models/additional
+        read_only: true
+      - type: bind
+        source: ./extra_model_paths.docker.yaml
+        target: /comfyui/extra_model_paths.docker.yaml
+        read_only: true
+      - type: bind
+        source: ./custom_nodes
+        target: /comfyui/custom_nodes
+      - type: bind
+        source: ./input
+        target: /comfyui/input
+      - type: bind
+        source: ./output
+        target: /comfyui/output
+      - type: bind
+        source: ./temp
+        target: /comfyui/temp
+      - type: bind
+        source: ./user
+        target: /comfyui/user
     environment:
-      - CUDA_VISIBLE_DEVICES=0
-      # Uncomment to enable manager
-      # - COMFYUI_ENABLE_MANAGER=1
-    
-    # Resource limits (adjust as needed)
-    mem_limit: 16g
-    
-    networks:
-      - comfyui-network
-
-  # Optional: Add a reverse proxy for better access control
-  # nginx:
-  #   image: nginx:latest
-  #   container_name: comfyui-nginx
-  #   restart: unless-stopped
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
-  #   depends_on:
-  #     - comfyui
-  #   networks:
-  #     - comfyui-network
-
-networks:
-  comfyui-network:
-    driver: bridge
+      CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-0}
+    command:
+      - python
+      - main.py
+      - --listen
+      - 0.0.0.0
+      - --port
+      - "8188"
+      - --extra-model-paths-config
+      - /comfyui/extra_model_paths.docker.yaml
+    shm_size: "8gb"
+    stop_grace_period: 30s

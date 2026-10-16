@@ -15,6 +15,7 @@ __pycache__
 .Python
 env/
 venv/
+.venv/
 ENV/
 build/
 develop-eggs/
@@ -55,14 +56,12 @@ alembic_db/
 docs/
 *.md
 
-# Large model files (use bind mounts instead)
-models/checkpoints/*
-models/vae/*
-models/loras/*
-models/embeddings/*
-models/upscale_models/*
-models/vae_approx/*
-models/style_models/*
+# Runtime data (use bind mounts instead)
+models/
+custom_nodes/
+user/
+temp/
+extra_model_paths.yaml
 
 # Generated files
 output/
